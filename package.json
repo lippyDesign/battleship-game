@@ -1,0 +1,17 @@
+{
+  "name": "battleship",
+  "private": true,
+  "scripts": {
+    "start": "meteor run"
+  },
+  "dependencies": {
+    "bcrypt": "^0.8.7",
+    "meteor-node-stubs": "~0.2.0",
+    "react": "^15.3.0",
+    "react-addons-pure-render-mixin": "^15.3.0",
+    "react-addons-update": "^15.3.0",
+    "react-dom": "^15.3.0",
+    "react-router": "^2.6.1",
+    "react-router-scroll": "^0.3.1"
+  }
+}

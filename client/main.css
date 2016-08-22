@@ -1,0 +1,95 @@
+* {
+  margin: 0;
+}
+html, body {
+  height: 100%;
+}
+.render-target {
+  min-height: 100%;
+  margin-bottom: -142px; 
+}
+.render-target:after {
+  content: "";
+  display: block;
+}
+.site-footer, .render-target:after {
+  height: 142px; 
+}
+.site-footer {
+  background: orange;
+}
+nav {
+  margin: 0 !important;
+}
+.jumbotron {
+  display: block;
+  margin: 0;
+}
+.mainContainer {
+  margin: 0 5%;
+}
+.gameLeftSection, .gameRightSection {
+  display: inline-block;
+  width: 50%;
+  height: 500px;
+  text-align: center;
+}
+.GameBoard {
+  height: 400px;
+  padding: 15px;
+}
+.cell {
+  border: 1px solid rgba(16,101,191,0.6);
+  display: inline-block;
+  width: 9%;
+  height: 9%;
+}
+.pointer {
+  cursor: pointer;
+}
+.cell small {
+  color: #1871C1;
+  opacity: 0.2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+.cellNumA small,.cellNumB small,.cellNumC small,.cellNumD small,.cellNumE small,.cellNumF small,.cellNumG small,
+.cellNumH small,.cellNumI small,.cellNumJ small, .cellNum1 small,.cellNum2 small,.cellNum3 small,.cellNum4 small,
+.cellNum5 small,.cellNum6 small,.cellNum7 small,.cellNum8 small,.cellNum9 small,.cellNum10 small, .cellNum- small {
+  opacity: 1;
+  font-weight: bold;
+  background: #B9ECFA;
+}
+.gameLeftSection h2 {
+  color: tomato;
+  font-size: 16px;
+}
+#possibleOption {
+  background-color: rgba(255, 99, 71, 0.5);
+}
+.alreadyTakenOption {
+  background-color: rgba(226, 177, 117, 0.5);
+}
+#ship {
+  background: rgb(12, 64, 118);
+  box-shadow: 2px 2px 2px;
+  opacity: 1;
+  color: black;
+}
+
+
+
+
+/* -------------- SMALL SCREENS ----------------------------------------------------------- */
+@media screen and (max-width: 1000px) {
+  .gameLeftSection, .gameRightSection {
+    width: 100%;
+  }
+}
+@media screen and (max-width: 600px) {
+  .cell {
+    height: 7%;
+  }
+}
