@@ -827,7 +827,6 @@ class GameContainer extends Component {
             return (
                 <li 
                     className={`cell cellNum${cell} `}
-                    id=''
                     key={cell}
                     //onClick={this.getShipInHand() ? (this.state.positioning ? ()=> this.setShip(cell, theShip) : ()=> this.positionShip(cell, theShip)) : ''}
                 >
