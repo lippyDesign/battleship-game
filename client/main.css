@@ -72,13 +72,19 @@ nav {
 .alreadyTakenOption {
   background-color: rgba(226, 177, 117, 0.5);
 }
+.killed {
+  background: indianred;
+  box-shadow: 2px 2px 2px;
+}
+.missed {
+  background-color: rgba(73, 93, 98, 0.2);
+}
 #ship {
   background: rgb(12, 64, 118);
   box-shadow: 2px 2px 2px;
   opacity: 1;
   color: black;
 }
-
 
 
 

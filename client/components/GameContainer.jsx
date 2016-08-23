@@ -11,30 +11,38 @@ class GameContainer extends Component {
         super();
         this.state = {
             ships: [
-                {vesselType: 'aircraft carrier', squares: 5, positioned: false, location: [], message: 'please position your aircraft carrier (5 squares)'},
-                {vesselType: 'battleship', squares: 4, positioned: false, location: [], message: 'please position your battleship (4 squares)'},
-                {vesselType: 'cruiser', squares: 3, positioned: false, location: [], message: 'please position your cruiser (3 squares)'},
-                {vesselType: 'destroyer', squares: 2, positioned: false, location: [], message: 'please position your destroyer (2 squares)'},
-                {vesselType: 'destroyer', squares: 2, positioned: false, location: [], message: 'please position your second destroyer (2 squares)'},
-                {vesselType: 'submarine', squares: 1, positioned: false, location: [], message: 'please position your submarine (1 square)'},
-                {vesselType: 'submarine', squares: 1, positioned: false, location: [], message: 'please position your second submarine (1 square)'},
+                {vesselType: 'aircraft carrier', squares: 5, positioned: false, dead: false, location: [], message: 'please position your aircraft carrier (5 squares)'},
+                {vesselType: 'battleship', squares: 4, positioned: false, dead: false, location: [], message: 'please position your battleship (4 squares)'},
+                {vesselType: 'cruiser', squares: 3, positioned: false, dead: false, location: [], message: 'please position your cruiser (3 squares)'},
+                {vesselType: 'destroyer', squares: 2, positioned: false, dead: false, location: [], message: 'please position your destroyer (2 squares)'},
+                {vesselType: 'destroyer', squares: 2, positioned: false, dead: false, location: [], message: 'please position your second destroyer (2 squares)'},
+                {vesselType: 'submarine', squares: 1, positioned: false, dead: false, location: [], message: 'please position your submarine (1 square)'},
+                {vesselType: 'submarine', squares: 1, positioned: false, dead: false, location: [], message: 'please position your second submarine (1 square)'},
             ],
             gameCells: [],
             cellsAlreadyTaken: [],
             possiblePositionOptions: {},
             positioning: false,
+            deadShipPositions: [],
 
             //////// computer ////////////
             compShips: [
-                {vesselType: 'aircraft carrier', squares: 5, positioned: false, location: [], message: 'please position your aircraft carrier (5 squares)'},
-                {vesselType: 'battleship', squares: 4, positioned: false, location: [], message: 'please position your battleship (4 squares)'},
-                {vesselType: 'cruiser', squares: 3, positioned: false, location: [], message: 'please position your cruiser (3 squares)'},
-                {vesselType: 'destroyer', squares: 2, positioned: false, location: [], message: 'please position your destroyer (2 squares)'},
-                {vesselType: 'destroyer', squares: 2, positioned: false, location: [], message: 'please position your second destroyer (2 squares)'},
-                {vesselType: 'submarine', squares: 1, positioned: false, location: [], message: 'please position your submarine (1 square)'},
-                {vesselType: 'submarine', squares: 1, positioned: false, location: [], message: 'please position your second submarine (1 square)'},
+                {vesselType: 'aircraft carrier', squares: 5, positioned: false, dead: false, location: [], message: 'please position your aircraft carrier (5 squares)'},
+                {vesselType: 'battleship', squares: 4, positioned: false, dead: false, location: [], message: 'please position your battleship (4 squares)'},
+                {vesselType: 'cruiser', squares: 3, positioned: false, dead: false, location: [], message: 'please position your cruiser (3 squares)'},
+                {vesselType: 'destroyer', squares: 2, positioned: false, dead: false, location: [], message: 'please position your destroyer (2 squares)'},
+                {vesselType: 'destroyer', squares: 2, positioned: false, dead: false, location: [], message: 'please position your second destroyer (2 squares)'},
+                {vesselType: 'submarine', squares: 1, positioned: false, dead: false, location: [], message: 'please position your submarine (1 square)'},
+                {vesselType: 'submarine', squares: 1, positioned: false, dead: false, location: [], message: 'please position your second submarine (1 square)'},
             ],
             compCellsAlreadyTaken: [],
+            deadCompShipPositions: [],
+
+            //////// in game ////////////
+            turn: '',
+            inGame: false,
+            usersShots: [],
+            computersShots: []
         }
     }
     componentWillMount() {
@@ -51,6 +59,9 @@ class GameContainer extends Component {
     }
     componentDidMount() {
         this.compPosition(this.state.compCellsAlreadyTaken); // computer selects ships
+        // determine who goes first
+        let turn = (Math.floor(Math.random() * 2) + 1) === 1 ? 'usersTurn' : 'computersTurn';
+        this.setState({turn});
     }
     positionShip(cell, ship) {
         if (this.state.cellsAlreadyTaken.indexOf(cell) > -1) {
@@ -724,19 +735,33 @@ class GameContainer extends Component {
             if (this.state.possiblePositionOptions.allPossible) { // if possiblePositionOptions from state is not an empty object
                 positionId = this.state.possiblePositionOptions.allPossible.indexOf(cell) > -1 ? 'possibleOption' : '';
             }
-            
-            positionClass = this.state.cellsAlreadyTaken.indexOf(cell) > -1 ? 'alreadyTakenOption' : '';
+            let positionClass = '';
+            if (!this.state.inGame) {
+                positionClass = this.state.cellsAlreadyTaken.indexOf(cell) > -1 ? 'alreadyTakenOption' : '';
+            } else {
+                positionClass = '';
+            }
 
             let blackShip = shipsArray.indexOf(cell) > -1 ? 'ship' : ''
             let cursor = this.getShipInHand() ? 'pointer' : '';
+            let shotOrNot = cell;
+            let shotCell = ''
+            if (this.state.computersShots.indexOf(cell) !== -1) {
+                shotOrNot = <i className="fa fa-times-circle-o text-danger" aria-hidden="true"></i>;
+                shotCell = 'missed';
+            }
+            if (shipsArray.indexOf(cell) !== -1 && this.state.computersShots.indexOf(cell) !== -1) { // if ship was hit
+                shotOrNot = <i className="fa fa-fire text-danger" aria-hidden="true"></i>;
+            }
+            
             return (
                 <li 
-                    className={`cell cellNum${cell} ${positionClass} ${cursor}`}
+                    className={`cell cellNum${cell} ${positionClass} ${cursor} ${shotCell}`}
                     id={positionId}
                     key={cell}
                     onClick={this.getShipInHand() ? (this.state.positioning ? ()=> this.setShip(cell, theShip) : ()=> this.positionShip(cell, theShip)) : ''}
                 >
-                        <small id={blackShip}>{cell}</small>
+                        <small id={blackShip}>{shotOrNot}</small>
                 </li>
             )
         });
@@ -824,21 +849,89 @@ class GameContainer extends Component {
         // map over the cells array and create li elements for every cell
         return cells.map( (cell) => {
             let blackShip = (shipsArray.indexOf(cell) === -1) ? '' : 'ship';
+            let cursor = this.state.inGame ? 'pointer' : '';
+            let shotOrNot = cell;
+            let shotCell = ''
+            if (this.state.usersShots.indexOf(cell) !== -1) { // if missed
+                shotOrNot = <i className="fa fa-times-circle-o text-danger" aria-hidden="true"></i>;
+                shotCell = 'missed';
+            }
+            if (shipsArray.indexOf(cell) !== -1 && this.state.usersShots.indexOf(cell) !== -1) { // if ship was hit
+                shotOrNot = <i className="fa fa-fire text-primary" aria-hidden="true"></i>;
+                shotCell = 'alreadyTakenOption';
+            }
+            if (this.state.deadCompShipPositions.indexOf(cell) !== -1) {
+                shotCell = 'killed';
+            }
             return (
                 <li 
-                    className={`cell cellNum${cell} `}
+                    className={`cell cellNum${cell} ${cursor} ${shotCell}`}
                     key={cell}
-                    //onClick={this.getShipInHand() ? (this.state.positioning ? ()=> this.setShip(cell, theShip) : ()=> this.positionShip(cell, theShip)) : ''}
+                    onClick={this.state.inGame && (this.state.turn === 'usersTurn') ? () => this.userPlay(cell) : '' }
                 >
-                        <small id={blackShip}>{cell}</small>
+                        <small id=''>{shotOrNot}</small>
                 </li>
             )
         });
     }
+    userPlay(cell) {
+        // user shoots into the tapped cell
+        if (this.state.usersShots.indexOf(cell) === -1) { // only do something if we user did not shoot there yet
+            this.setState({usersShots: this.state.usersShots.concat(cell), turn: 'computersTurn'});
+            if (this.state.compShips.every(ship => ship.dead === true)) { // if all ships are killed
+                return this.gameOver()
+            }
+            return this.userChecks();
+        }
+    }
+    userChecks() {
+        // if there are any comp dead ships- update
+        let newData = this.state.compShips.slice(); //copy array
+        newData.forEach( (ship) => {
+            if (ship.location.every( cell =>  this.state.usersShots.indexOf(cell) !== -1) ) {
+                ship.dead = true;
+            }
+        });
+        this.setState({compShips: newData});
+        if (this.state.compShips.every(ship => ship.dead === true)) { // if all ships are killed
+            return this.gameOver('user')
+        }
+        return this.computerPlay();
+    }
+    computerPlay() {
+        // computer shoots at random
+        let randomCell = this.state.gameCells[Math.floor(Math.random() * this.state.gameCells.length)]; // select a random shot
+        if (this.state.computersShots.indexOf(randomCell) !== -1) { // if computer already shot there, then redo
+            return this.computerPlay();
+        }
+        this.setState({computersShots: this.state.computersShots.concat(randomCell), turn: 'usersTurn'});
+    }
+    gameOver(winner) {
+        console.log(`${winner} won this game`);
+        return
+    }
+    startGame() {
+        let randomCell = this.state.gameCells[Math.floor(Math.random() * this.state.gameCells.length)];
+        if (this.state.turn === 'computersTurn') {
+            this.setState({
+                inGame: true,
+                computersShots: this.state.computersShots.concat(randomCell),
+                turn: 'usersTurn'
+            });
+        } else {
+            this.setState({inGame: true})
+        }
+    }
     render() {
-        const message = this.getShipInHand() ? this.getShipInHand().message : 'All ships are positioned';
+        let message = '';
+        if (!this.state.inGame) {
+            message = this.getShipInHand() ? this.getShipInHand().message : 'All ships are positioned';
+        } else {
+            message = (this.state.turn === 'usersTurn') ? 'your turn' : "computer's turn";
+        }
+        
         // If all ships are positioned than we save them into the database
-        const readyButton = (message === 'All ships are positioned') ? <button className="btn btn-success" onClick={() => Meteor.call('shipPositions.insert', this.state.ships, this.state.compShips)}>I'm ready!</button> : '';
+        const readyButton = (message === 'All ships are positioned') ? <button className="btn btn-success" onClick={() => this.startGame()}>I'm ready!</button> : '';
         return (
             <div className='GameContainer'>
                 <div className="gameLeftSection">
