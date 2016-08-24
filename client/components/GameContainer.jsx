@@ -40,7 +40,9 @@ class GameContainer extends Component {
             turn: '',
             inGame: false,
             usersShots: [],
-            computersShots: []
+            computersShots: [],
+            nextCompTargets: [],
+            shipPositionNotPossible: []
         }
     }
     componentWillMount() {
@@ -871,21 +873,86 @@ class GameContainer extends Component {
         });
     }
     userPlay(cell) {
+        let x = this.state.compShips.map( ship => ship.location); // comp ship position arrays
+        let flatX = [].concat.apply([], x); // all cells where comp positioned ships
+        let whoGoesNext = 'computersTurn'; // comp will go next, unless user hits a ship
         // user shoots into the tapped cell
-        if (this.state.usersShots.indexOf(cell) === -1 && this.state.gameCells.indexOf(cell) !== -1) { // only do something if we user did not shoot there yet
-            this.setState({usersShots: this.state.usersShots.concat(cell), turn: 'computersTurn'});
-            this.computerPlay();
+        if (this.state.usersShots.indexOf(cell) === -1 && this.state.gameCells.indexOf(cell) !== -1) { // only do something if user did not shoot there yet
+            if (flatX.indexOf(cell) !== -1) {
+                whoGoesNext = 'usersTurn';
+            }
+            this.setState({usersShots: this.state.usersShots.concat(cell), turn: whoGoesNext});
+            //this.computerPlay();
         }
     }
     computerPlay() {
-        // computer shoots at random
-        let randomCell = this.state.gameCells[Math.floor(Math.random() * this.state.gameCells.length)]; // select a random shot
-        if (this.state.computersShots.indexOf(randomCell) !== -1) { // if computer already shot there, then redo
+        let possTargets = this.state.nextCompTargets.slice();
+        let impossTargets = this.state.shipPositionNotPossible.slice();
+        let alreadyShot = this.state.computersShots.slice();
+        let whoGoesNext = 'usersTurn'; // user will go next, unless comp hits a ship
+        let randomCell;      
+        // if there are cells in the possible Targets array we'll select a shot from there, else random shot
+        if (possTargets.length !== 0) {
+            randomCell = possTargets[Math.floor(Math.random() * possTargets.length)];
+            possTargets.splice(possTargets.indexOf(randomCell), 1); // remove cell from possible targets list
+        } else {
+            randomCell = this.state.gameCells[Math.floor(Math.random() * this.state.gameCells.length)]; // select a random shot
+        }
+        // if computer already shot there, or shot is in the impossible array then redo
+        if (alreadyShot.indexOf(randomCell) !== -1 || impossTargets.indexOf(randomCell) !== -1) {
             return this.computerPlay();
         }
-        this.setState({computersShots: this.state.computersShots.concat(randomCell), turn: 'usersTurn'});
+        alreadyShot.push(randomCell); // add random cell to the already shot cells
+        console.log("shot: " + randomCell)
+        let x = this.state.ships.map( ship => ship.location); // user ship position arrays
+        let flatX = [].concat.apply([], x); // all cells where user positioned ships
+        let possibleTargets = [1, 10, -1, -10]; // possible ways a ship could be positioned
+        let positionsImpossible = [9, 11, -9, -11]; // user's ship can't be positioned here as the ships cannot touch
+        if (randomCell.charAt(0) === 'A') { // if ship hit on the left side of the grid
+            possibleTargets = [1, 10, -10];
+            positionsImpossible = [11, -9];
+        } else if (randomCell.charAt(0) === 'J') { // if ship hit on the right side of the grid
+            possibleTargets = [10, -1, -10];
+            positionsImpossible = [9, -11];
+        }
+        if (flatX.indexOf(randomCell) !== -1) { // if ship was hit by the shot
+            whoGoesNext = 'computersTurn'; // comp hit a ship therefore it also has next turn
+            index = this.state.gameCells.indexOf(randomCell)
+            possibleTargets.forEach( (possibleTarget) => {
+                // push possible next targets if they exist on the grid and are not already in the array
+                if (this.state.gameCells[index + possibleTarget] && possTargets.indexOf(this.state.gameCells[index + possibleTarget]) === -1) {
+                    possTargets.push(this.state.gameCells[index + possibleTarget]);
+                }
+            });
+            positionsImpossible.forEach( (impossiblePosition) => {
+                // push impossible positions if they exist on the grid and are not already in the array
+                if (this.state.gameCells[index + impossiblePosition] && impossTargets.indexOf(this.state.gameCells[index + impossiblePosition]) === -1) {
+                    impossTargets.push(this.state.gameCells[index + impossiblePosition]);
+                }
+            })
+        }
+        // remove all possible targets if they are in the impossible target array
+        impossTargets.forEach((impossTarget) => {
+            if (possTargets.indexOf(impossTarget) !== -1) {
+                possTargets.splice(possTargets.indexOf(impossTarget), 1);
+            }
+        });
+        // remove all possible targets if they are in the already shot array
+        alreadyShot.forEach( (compShot) => {
+            if (possTargets.indexOf(compShot) !== -1) {
+                possTargets.splice(possTargets.indexOf(compShot), 1);
+            }
+        });
+        this.setState({
+            computersShots: alreadyShot,
+            nextCompTargets: possTargets,
+            shipPositionNotPossible: impossTargets,
+            turn: whoGoesNext
+        });
     }
     render() {
+        console.log('target: ' + this.state.nextCompTargets)
+        console.log('impossible: ' + this.state.shipPositionNotPossible)
         let allCompShipsKilled;
         let allUserShipsKilled;
         if (this.state.inGame) { // if comp ships were killed
