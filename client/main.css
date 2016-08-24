@@ -76,6 +76,9 @@ nav {
   background: indianred;
   box-shadow: 2px 2px 2px;
 }
+#white {
+  color: white;
+}
 .missed {
   background-color: rgba(73, 93, 98, 0.2);
 }
