@@ -43,7 +43,8 @@ class GameContainer extends Component {
             computersShots: [],
             nextCompTargets: [],
             shipPositionNotPossible: [],
-            locationsOfHitShips: []
+            locationsOfHitShips: [],
+            cellsToShootAt: []
         }
     }
     componentWillMount() {
@@ -886,6 +887,9 @@ class GameContainer extends Component {
             //this.computerPlay();
         }
     }
+    compSelectRandomTarget() {
+
+    }
     computerPlay() {
         let possTargets = this.state.nextCompTargets.slice();
         let impossTargets = this.state.shipPositionNotPossible.slice();
@@ -893,18 +897,72 @@ class GameContainer extends Component {
         let hitsArray = this.state.locationsOfHitShips;
         let whoGoesNext = 'usersTurn'; // user will go next, unless comp hits a ship
         let aliveShips = [];
+        let cellsToShoot = [];
         this.state.ships.forEach(ship => {
             if (ship.location.some(cell => alreadyShot.indexOf(cell) === -1)) {
                 aliveShips.push(ship);
             }
         })
+        let cellsNotToHit = [...alreadyShot, ...impossTargets];
+        this.state.gameCells.forEach( cell => {
+            if (cellsNotToHit.indexOf(cell) === -1) {
+                cellsToShoot.push(cell)
+            }
+        });
         let randomCell;   
         // if there are cells in the possible Targets array we'll select a shot from there, else random shot
         if (possTargets.length !== 0) {
             randomCell = possTargets[Math.floor(Math.random() * possTargets.length)];
             possTargets.splice(possTargets.indexOf(randomCell), 1); // remove cell from possible targets list
         } else {
-            randomCell = this.state.gameCells[Math.floor(Math.random() * this.state.gameCells.length)]; // select a random shot
+            // find the number of squares of the biggest available ship
+            biggestShipSquares = aliveShips[0].squares;
+            // get random cell from the available cells
+            randomCell = cellsToShoot[Math.floor(Math.random() * cellsToShoot.length)];
+            // check if the biggest ship will fit in at least one direction
+            let possibleOptionsXp = [];
+            let possibleOptionsXm = [];
+            let possibleOptionsYp = [];
+            let possibleOptionsYm = [];
+            for (let i = 1; i < biggestShipSquares; i++) {
+                let index = this.state.gameCells.indexOf(randomCell);
+                if (this.state.gameCells[index + i]) {
+                        possibleOptionsXp.push(this.state.gameCells[index + i])
+                }
+                if (this.state.gameCells[index - i]) {
+                    possibleOptionsXm.push(this.state.gameCells[index - i])
+                }
+                if (this.state.gameCells[index + (10 * i)]) {
+                    possibleOptionsYm.push(this.state.gameCells[index + (10 * i)])
+                }
+                if (this.state.gameCells[index - (10 * i)]) {
+                    possibleOptionsYp.push(this.state.gameCells[index - (10 * i)])
+                }
+            }
+            // if biggest ship doen't fit, we'll make the direction = z1 which will evealuate false later
+            if (possibleOptionsXp.length < biggestShipSquares - 1) {
+                possibleOptionsYp = ['Z1'];
+            }
+            if (possibleOptionsXm.length < biggestShipSquares - 1) {
+                possibleOptionsXm = ['Z1'];
+            }
+            if (possibleOptionsYp.length < biggestShipSquares - 1) {
+                possibleOptionsYp = ['Z1'];
+            }
+            if (possibleOptionsYm.length < biggestShipSquares - 1) {
+                possibleOptionsYm = ['Z1'];
+            }
+            if (possibleOptionsXp.some(char => char.charAt(1) !== randomCell.charAt(1))) {
+                possibleOptionsXp = ['Z1'];
+            }
+            if (possibleOptionsXm.some(char => char.charAt(1) !== randomCell.charAt(1))) {
+                possibleOptionsXm = ['Z1'];
+            }
+            
+            // if biggest available ship will not fit in at least one dircetion, we'll redo
+            if (!possibleOptionsXp.every(cell => cellsToShoot.indexOf(cell) !== -1) && !possibleOptionsXm.every(cell => cellsToShoot.indexOf(cell) !== -1) && !possibleOptionsYm.every(cell => cellsToShoot.indexOf(cell) !== -1) && !possibleOptionsYp.every(cell => cellsToShoot.indexOf(cell) !== -1)) {
+                return this.computerPlay();
+            }
         }
         // if computer already shot there, or shot is in the impossible array then redo
         if (alreadyShot.indexOf(randomCell) !== -1 || impossTargets.indexOf(randomCell) !== -1) {
@@ -940,7 +998,6 @@ class GameContainer extends Component {
             })
         }
         // if all cells of the biggest available ship are hit, add all surounding cells to the impossible array if they are not already there
-        console.log(aliveShips[0])
         if (aliveShips[0].location.every(cell => hitsArray.indexOf(cell) !== -1)) {
             let positionsImpossible = [1, 9, 10, 11, -1, -9, -10, -11]; // user's ship can't be positioned here as the ships cannot touch
             if (randomCell.charAt(0) === 'A') { // if ship hit on the left side of the grid
@@ -967,7 +1024,6 @@ class GameContainer extends Component {
                 possTargets.splice(possTargets.indexOf(compShot), 1);
             }
         });
-        console.log(impossTargets)
         this.setState({
             computersShots: alreadyShot,
             nextCompTargets: possTargets,
