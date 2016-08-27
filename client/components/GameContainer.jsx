@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
 import { createContainer } from 'meteor/react-meteor-data';
+import { browserHistory } from 'react-router';
 
 import UserGameboard from './UserGameboard';
 import OponentGameboard from './OponentGameboard';
@@ -863,6 +864,26 @@ class GameContainer extends Component {
                 shotOrNot = <i className="fa fa-fire text-info" id='white' aria-hidden="true"></i>;
                 shotCell = 'killed';
             }
+            // if game is over, display all comp ships
+            let allCompShipsKilled;
+            let allUserShipsKilled;
+            if (this.state.inGame) { // if comp ships were killed
+                let x = this.state.compShips.map( ship => ship.location);
+                let flatX = [].concat.apply([], x);
+                allCompShipsKilled = flatX.every(element => this.state.usersShots.indexOf(element) !== -1);
+            }
+            if (this.state.inGame) { // if user ships were killed
+                let x = this.state.ships.map( ship => ship.location);
+                let flatX = [].concat.apply([], x);
+                allUserShipsKilled = flatX.every(element => this.state.computersShots.indexOf(element) !== -1);
+            }
+            if (allCompShipsKilled || allUserShipsKilled) {
+                if (shipsArray.indexOf(cell) !== -1 && this.state.usersShots.indexOf(cell) === -1) { // display the rest of comp ships
+                    shotOrNot = cell;
+                    shotCell = 'notKilled';
+                    let cursor = '';
+                }
+            }
             return (
                 <li 
                     className={`cell cellNum${cell} ${cursor} ${shotCell}`}
@@ -1054,15 +1075,11 @@ class GameContainer extends Component {
         message = allUserShipsKilled ? 'game over, Computer won' : message; // if computer won
         // If all ships are positioned than we save them into the database
         const readyButton = (message === 'All ships are positioned') ? <button className="btn btn-success" onClick={() => this.setState({inGame: true})}>I'm ready!</button> : '';
-        if (allCompShipsKilled || allUserShipsKilled) {
-            return (
-                <h2>{message}</h2>
-            )
-        }
+        const restartButton = (allCompShipsKilled || allUserShipsKilled) ? <button className="btn btn-primary" onClick={() => window.location.reload()}>Rematch</button> : '';
         return (
             <div className='GameContainer'>
                 <div className="gameLeftSection">
-                    <h2>{message} {readyButton}</h2>
+                    <h2>{message} {readyButton} {restartButton}</h2>
                     <h1>User</h1>
                     <UserGameboard
                         gridMaker={this.gridMaker.bind(this)}

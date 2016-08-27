@@ -76,6 +76,10 @@ nav {
   background: indianred;
   box-shadow: 2px 2px 2px;
 }
+.notKilled {
+  background: mediumseagreen;
+  box-shadow: 2px 2px 2px;
+}
 #white {
   color: white;
 }
@@ -98,7 +102,28 @@ nav {
   }
 }
 @media screen and (max-width: 600px) {
+  .GameBoard {
+    padding: 0;
+  }
+  .cell {
+    height: 8%;
+  }
+  .gameRightSection h1 {
+    margin-top: 0;
+  }
+}
+@media screen and (max-width: 600px) {
   .cell {
     height: 7%;
+  }
+}
+@media screen and (min-width: 720px) {
+  .cell {
+    height: 9%;
+  }
+}
+@media screen and (min-width: 800px) {
+  .cell {
+    height: 10%;
   }
 }
