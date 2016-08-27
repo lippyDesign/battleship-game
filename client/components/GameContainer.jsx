@@ -887,9 +887,6 @@ class GameContainer extends Component {
             //this.computerPlay();
         }
     }
-    compSelectRandomTarget() {
-
-    }
     computerPlay() {
         let possTargets = this.state.nextCompTargets.slice();
         let impossTargets = this.state.shipPositionNotPossible.slice();
@@ -1012,6 +1009,7 @@ class GameContainer extends Component {
                 }
             });
         }
+        
         // remove all possible targets if they are in the impossible target array
         impossTargets.forEach((impossTarget) => {
             if (possTargets.indexOf(impossTarget) !== -1) {
