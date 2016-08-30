@@ -92,7 +92,37 @@ nav {
   opacity: 1;
   color: black;
 }
-
+.compOrHumanSelector {
+  min-height: 700px;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  text-align: center;
+  padding: 10px 0;
+}
+.compOrHumanSelector section {
+  width: 350px;
+  border: 1px solid gray;
+  align-self: center;
+  padding: 20px;
+  border-radius: 5px;
+  background: rgb(248, 248, 248);
+  margin: 10px;
+}
+.compOrHumanSelector h2{
+  font-size: 18px;
+}
+.compOrHumanSelector section:hover {
+  background: rgb(206, 207, 202);
+  cursor: pointer;
+  box-shadow: 2px 2px 2px;
+}
+.loginButtons {
+  margin: 15px 0 0 15px;
+}
+#login-buttons a, .accounts-dialog a {
+  text-decoration: none;
+}
 
 
 /* -------------- SMALL SCREENS ----------------------------------------------------------- */

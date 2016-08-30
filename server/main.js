@@ -1,6 +1,6 @@
 import { Meteor } from 'meteor/meteor';
 
-import { ShipPositions } from '../imports/collections/shipPositions';
+import { Staging } from '../imports/collections/staging';
 
 Meteor.startup(() => {
   // code to run on server at startup

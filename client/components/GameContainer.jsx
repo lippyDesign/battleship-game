@@ -4,8 +4,9 @@ import { browserHistory } from 'react-router';
 
 import UserGameboard from './UserGameboard';
 import OponentGameboard from './OponentGameboard';
+import Navbar from './Navbar'
 
-import { ShipPositions } from '../../imports/collections/shipPositions';
+import { Staging } from '../../imports/collections/staging';
 
 class GameContainer extends Component {
     constructor() {
@@ -1076,8 +1077,18 @@ class GameContainer extends Component {
         // If all ships are positioned than we save them into the database
         const readyButton = (message === 'All ships are positioned') ? <button className="btn btn-success" onClick={() => this.setState({inGame: true})}>I'm ready!</button> : '';
         const restartButton = (allCompShipsKilled || allUserShipsKilled) ? <button className="btn btn-primary" onClick={() => window.location.reload()}>Rematch</button> : '';
+        let whoIsOpponent = '';
+        if (this.props.params.opponent === 'computer') {
+            whoIsOpponent = (
+                <div className="gameRightSection">
+                    <h1>Opponent</h1>
+                    <OponentGameboard gridMaker={this.autoGridMaker.bind(this)}/>
+                </div>
+            )
+        } 
         return (
             <div className='GameContainer'>
+                <Navbar/>
                 <div className="gameLeftSection">
                     <h2>{message} {readyButton} {restartButton}</h2>
                     <h1>User</h1>
@@ -1085,18 +1096,15 @@ class GameContainer extends Component {
                         gridMaker={this.gridMaker.bind(this)}
                     />
                 </div>
-                <div className="gameRightSection">
-                    <h1>Opponent</h1>
-                    <OponentGameboard gridMaker={this.autoGridMaker.bind(this)}/>
-                </div>
+                {whoIsOpponent}
             </div>
         )
     }
 }
 
 export default createContainer( () => {
-    Meteor.subscribe('shipPositions');
+    Meteor.subscribe('staging');
     return {
-        shipPositions: ShipPositions.find({}).fetch(),
+        staging: Staging.find({}).fetch(),
     };
 }, GameContainer);

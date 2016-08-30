@@ -1,27 +1,25 @@
 import React, {Component} from 'react';
+import { browserHistory } from 'react-router';
 
 import Navbar from '../components/Navbar';
 import HomePageHeader from '../components/HomePageHeader';
 import HomePageMain from '../components/HomePageMain';
-import CompOrHumanSelector from '../components/CompOrHumanSelector';
+import GameContainer from '../components/GameContainer';
 
 class HomePage extends Component {
+    componentWillMount() {
+        if (Meteor.user()) {
+            browserHistory.push('/');
+        }
+    }
 
     render() {
-        if (!Meteor.userId()) {
-            return (
-                <div>
-                    <Navbar/>
-                    <HomePageHeader/>
-                    <HomePageMain/>
-                </div>
-            )
-        }
+        
         return (
             <div>
                 <Navbar/>
                 <main className="mainContainer">
-                    <CompOrHumanSelector/>
+                    <GameContainer/>
                 </main>
             </div>
         )

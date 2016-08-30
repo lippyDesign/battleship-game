@@ -6,14 +6,14 @@ import { Link, browserHistory } from 'react-router';
 
 if (Meteor.isServer) {
   // This code only runs on the server
-  Meteor.publish('shipPositions', function shipPositionsPublication() {
-    return ShipPositions.find();
+  Meteor.publish('staging', function stagingPublication() {
+    return Staging.find();
   });
 }
 
 Meteor.methods({
 
-    'shipPositions.insert'(gameShips, opponentGameShips = null) {
+    'staging.insert'(gameShips, opponentGameShips = null) {
         
         let ships = []
         let opponentShips = []
@@ -28,9 +28,10 @@ Meteor.methods({
         })
         
         // Make sure the user is logged in before inserting a task
-        /*if (!this.userId) {
+        if (!this.userId) {
             throw new Meteor.Error('not-authorized');
-        }*/
+        }
+
         if (opponentGameShips !== null) { // if no oponent
             // Make sure we are inserting strings
             opponentGameShips.forEach( ({vesselType, location}) => {
@@ -40,21 +41,21 @@ Meteor.methods({
                 })
                 opponentShips.push({vesselType, location});
             });
-            ShipPositions.insert({
+            Staging.insert({
                 ships,
                 opponentShips,
                 createdAt: new Date(),
-                createdBy: this.userId ? this.userId : '1234computer',
-                username: Meteor.users.findOne(this.userId) ? Meteor.users.findOne(this.userId).username : 'computer',
+                createdBy: this.userId,
+                username: Meteor.users.findOne(this.userId).username,
                 finished: false
             });
         } else { // if there is an opponent
-            ShipPositions.insert({
+            Staging.insert({
                 ships,
                 opponentShips,
                 createdAt: new Date(),
-                createdBy: this.userId ? this.userId : '1234computer',
-                username: Meteor.users.findOne(this.userId) ? Meteor.users.findOne(this.userId).username : 'computer',
+                createdBy: this.userId,
+                username: Meteor.users.findOne(this.userId).username,
                 finished: false
             }, (error, result) => {
                 if ( error ) {throw new Meteor.Error(error)}; //info about what went wrong
@@ -66,4 +67,4 @@ Meteor.methods({
     }
 });
 
-export const ShipPositions = new Mongo.Collection('shipPositions');
+export const Staging = new Mongo.Collection('staging');
