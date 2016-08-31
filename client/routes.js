@@ -12,6 +12,7 @@ export default routes = (
     <Router history={browserHistory} render={applyRouterMiddleware(useScroll())} >
         <Route path='/' component={App}>
             <IndexRoute component={HomePage}/>
+            <Route path='/dashboard' component={DashboardPage}/>
             <Route path='/create-game/:opponent' component={GameContainer}/>
             <Route path='/create-game/:opponent' component={GameContainer}/>
             <Route path='/game-staging' component={GameStaging}/>

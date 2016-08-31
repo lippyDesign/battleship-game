@@ -123,6 +123,21 @@ nav {
 #login-buttons a, .accounts-dialog a {
   text-decoration: none;
 }
+.signUpForm, .signInForm, .resetForm {
+  height: 50px;
+  padding: 8px 5px 5px 0;
+  display: inline-block;
+}
+.form-control, .signUpBtn {
+  margin: 0 10px;
+}
+.accountButtons {
+  padding: 8px 15px 0 0;
+  display: inline-block;
+}
+.accountButtons button {
+  margin-right: 10px;
+}
 
 
 /* -------------- SMALL SCREENS ----------------------------------------------------------- */
