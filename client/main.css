@@ -123,7 +123,7 @@ nav {
 #login-buttons a, .accounts-dialog a {
   text-decoration: none;
 }
-.signUpForm, .signInForm, .resetForm {
+.signUpForm, .signInForm, .resetForm, .loggedInNav {
   height: 50px;
   padding: 8px 5px 5px 0;
   display: inline-block;

@@ -10,6 +10,8 @@ class Navbar extends Component {
             formType: '',
             spinnerOrSignUp: '',
             spinnerOrSignIn: 'fa fa-sign-in',
+            spinnerOrSend: 'fa fa-paper-plane',
+            spinnerOrPower: "fa fa-power-off"
         }
     }
     showSignUpForm() {
@@ -109,16 +111,21 @@ class Navbar extends Component {
         const emailForUsersPassword = this.refs.recoveryEmail.value.trim();
         
         if (emailForUsersPassword !== "") {
+            // display spinner
+            this.setState({spinnerOrSend: 'fa fa-circle-o-notch fa-spin'});
+            // send recovery email
             Accounts.forgotPassword({email: emailForUsersPassword}, (er) => {
-                if (er) {
+                if (er) { // show error message and hide spinner
                     this.setState({
                         messageColor: 'text-danger',
-                        message: (er.reason)
+                        message: (er.reason),
+                        spinnerOrSend: 'fa fa-paper-plane'
                     })
                 } else {
-                    this.setState({
+                    this.setState({ // show success message and hide spinner
                         messageColor: 'text-success',
-                        message: "We sent you an email with instructions on how to reset your password"
+                        message: "We sent you an email with instructions on how to reset your password",
+                        spinnerOrSend: 'fa fa-paper-plane'
                     })
                     this.refs.recoveryEmail.value = '';
                 }
@@ -130,7 +137,26 @@ class Navbar extends Component {
             })
         }
     }
-    render() {
+    logUserOut() {
+        this.setState({
+            spinnerOrPower: "fa fa-circle-o-notch fa-spin",
+        })
+        Meteor.logout( (er) => {
+            if (er) {
+                this.setState({
+                    spinnerOrPower: "fa fa-power-off",
+                    message: (er.reason),
+                    messageColor: 'text-danger'
+                });
+            } else {
+                this.setState({
+                    spinnerOrPower: "fa fa-power-off",
+                });
+                browserHistory.push("/");
+            }
+        });
+    }
+    getLoggedOutNav() {
         let formType;
         if (!this.state.formType) {
             formType = (
@@ -171,13 +197,23 @@ class Navbar extends Component {
                     <form className="form-inline resetForm" onSubmit={this.resetPassword.bind(this)}>
                         <span className={this.state.messageColor}>{this.state.message}</span>
                         <input className="form-control" type="email" ref="recoveryEmail" placeholder="Email"/>
-                        <button className="btn btn-primary signUpBtn"><i className="fa fa-paper-plane"></i> Send Password</button>
+                        <button className="btn btn-primary signUpBtn"><i className={this.state.spinnerOrSend}></i> Send Password</button>
                     </form>
                     <button onClick={this.showSignInForm.bind(this)} className="btn btn-link">Sign In</button>
                     <span>or <button onClick={this.showSignUpForm.bind(this)} className="btn btn-link">Sign Up</button></span>
                 </div>
             )
         }
+        return formType;
+    }
+    getLoggedInNav() {
+        return (
+            <div className="loggedInNav">
+                <button onClick={this.logUserOut.bind(this)} className="btn btn-danger"><i className={this.state.spinnerOrPower}></i> Sign Out</button>
+            </div>
+        )
+    }
+    render() {
         return (
             <nav className="navbar navbar-default">
                 <div className="container-fluid">
@@ -185,7 +221,7 @@ class Navbar extends Component {
                         <a className="navbar-brand" href="#">Battleship</a>
                     </div>
                     <div className="nav navbar-nav navbar-right">
-                        {formType}
+                        {Meteor.userId() ? this.getLoggedInNav() : this.getLoggedOutNav()}
                     </div>
                 </div>
             </nav>
