@@ -837,7 +837,7 @@ class GameContainer extends Component {
         });
         return this.compPosition(newCellsUsed); // recursive call of the function above
     }
-    autoGridMaker(numColumns, numRows) {
+    autoGridMaker(numColumns, numRows, opponent = null) {
         const alphabet = [...Array(26)].reduce(a=>a+String.fromCharCode(i++),'',i=97); // create alphabet
         const letters = alphabet.substr(0, numColumns).toUpperCase().split(""); // get the needed amount of alphabet characters for columns
         let cells = ['-', ...letters] // initiate array for cells and insert column labels into it
@@ -848,7 +848,13 @@ class GameContainer extends Component {
                 return cells.push(`${letter}${i + 1}`) // for every row number we push all letters with that row number into cells array
             });
         }
-        let shipPositions = this.state.compShips.map( ship => ship.location); // get positions of ships from ships state
+        let shipPositions;
+        if (this.props.params.opponent === 'computer') { // if opponent is computer
+            let shipPositions = this.state.compShips.map( ship => ship.location); // get positions of ships from ships state
+        } else { // if opponent is human
+            let shipPositions = opponent.ships.map( ship => ship.location); // get positions of ships from database
+        }
+        
         let shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
         // map over the cells array and create li elements for every cell
         return cells.map( (cell) => {
@@ -1085,14 +1091,32 @@ class GameContainer extends Component {
         const readyButton = (message === 'All ships are positioned') ? <button className="btn btn-success" onClick={() => this.startGame()}>I'm ready!</button> : '';
         const restartButton = (allCompShipsKilled || allUserShipsKilled) ? <button className="btn btn-primary" onClick={() => window.location.reload()}>Rematch</button> : '';
         let whoIsOpponent = '';
-        if (this.props.params.opponent === 'computer') {
+        if (this.props.params.opponent === 'computer') { // if chose to play against computer
             whoIsOpponent = (
                 <div className="gameRightSection">
                     <h1>Opponent</h1>
                     <OponentGameboard gridMaker={this.autoGridMaker.bind(this)}/>
                 </div>
             )
-        } 
+        }
+        else if (this.props.params.opponent === 'random-human') { // if chose to play against a random human
+            // check if someone is ready to play
+            const opponent = this.props.staging.find(opponent => opponent.createdBy === this.props.currentUser._id) ? this.props.staging.find(opponent => opponent.createdBy === this.props.currentUser._id) : 'waiting for opponent'
+            if (typeof opponent === 'string') { // if no opponent
+                whoIsOpponent = (
+                    <div className="gameRightSection">
+                        <h1 className="text-info">Searching for Opponent <i className="fa fa-circle-o-notch fa-spin fa-3x fa-fw"></i></h1>
+                    </div>
+                )
+            } else { // if there is an opponent
+                whoIsOpponent = (
+                    <div className="gameRightSection">
+                        <h1>{opponent.username ? opponent.username : 'Opponent'}</h1>
+                        <OponentGameboard gridMaker={this.autoGridMaker.bind(this)} opponent={opponent}/>
+                    </div>
+                )
+            }
+        }
         return (
             <div className='GameContainer'>
                 <Navbar/>
