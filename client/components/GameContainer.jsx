@@ -1052,6 +1052,13 @@ class GameContainer extends Component {
             locationsOfHitShips: hitsArray
         });
     }
+    startGame() {
+        if (this.props.params.opponent === 'computer') {
+            return this.setState({inGame: true})
+        } else {
+            return Meteor.call('staging.insert', this.state.ships);
+        }
+    }
     render() {
         let allCompShipsKilled;
         let allUserShipsKilled;
@@ -1075,7 +1082,7 @@ class GameContainer extends Component {
         message = allCompShipsKilled ? 'game over, User won' : message; // if user won
         message = allUserShipsKilled ? 'game over, Computer won' : message; // if computer won
         // If all ships are positioned than we save them into the database
-        const readyButton = (message === 'All ships are positioned') ? <button className="btn btn-success" onClick={() => this.setState({inGame: true})}>I'm ready!</button> : '';
+        const readyButton = (message === 'All ships are positioned') ? <button className="btn btn-success" onClick={() => this.startGame()}>I'm ready!</button> : '';
         const restartButton = (allCompShipsKilled || allUserShipsKilled) ? <button className="btn btn-primary" onClick={() => window.location.reload()}>Rematch</button> : '';
         let whoIsOpponent = '';
         if (this.props.params.opponent === 'computer') {
@@ -1091,7 +1098,7 @@ class GameContainer extends Component {
                 <Navbar/>
                 <div className="gameLeftSection">
                     <h2>{message} {readyButton} {restartButton}</h2>
-                    <h1>User</h1>
+                    <h1>{this.props.currentUser ? this.props.currentUser.username : 'User'}</h1>
                     <UserGameboard
                         gridMaker={this.gridMaker.bind(this)}
                     />
@@ -1106,5 +1113,6 @@ export default createContainer( () => {
     Meteor.subscribe('staging');
     return {
         staging: Staging.find({}).fetch(),
+        currentUser: Meteor.user()
     };
 }, GameContainer);

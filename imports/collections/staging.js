@@ -13,10 +13,9 @@ if (Meteor.isServer) {
 
 Meteor.methods({
 
-    'staging.insert'(gameShips, opponentGameShips = null) {
+    'staging.insert'(gameShips) {
         
         let ships = []
-        let opponentShips = []
 
         // Make sure we are inserting strings
         gameShips.forEach( ({vesselType, location}) => {
@@ -32,38 +31,12 @@ Meteor.methods({
             throw new Meteor.Error('not-authorized');
         }
 
-        if (opponentGameShips !== null) { // if no oponent
-            // Make sure we are inserting strings
-            opponentGameShips.forEach( ({vesselType, location}) => {
-                check(vesselType, String);
-                location.forEach( (current) => {
-                    check(current, String);
-                })
-                opponentShips.push({vesselType, location});
-            });
-            Staging.insert({
-                ships,
-                opponentShips,
-                createdAt: new Date(),
-                createdBy: this.userId,
-                username: Meteor.users.findOne(this.userId).username,
-                finished: false
-            });
-        } else { // if there is an opponent
-            Staging.insert({
-                ships,
-                opponentShips,
-                createdAt: new Date(),
-                createdBy: this.userId,
-                username: Meteor.users.findOne(this.userId).username,
-                finished: false
-            }, (error, result) => {
-                if ( error ) {throw new Meteor.Error(error)}; //info about what went wrong
-                if ( result ) { // if successful 
-                    browserHistory.push('/game-staging');
-                }
-            });
-        }
+        Staging.insert({
+            ships,
+            createdAt: new Date(),
+            createdBy: this.userId,
+            username: Meteor.users.findOne(this.userId).username,
+        });
     }
 });
 

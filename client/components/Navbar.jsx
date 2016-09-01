@@ -167,7 +167,7 @@ class Navbar extends Component {
             )
         } else if (this.state.formType === "signIn") {
             formType = (
-                <div>
+                <div className="formWrapper">
                     <form className="form-inline signInForm" onSubmit={this.handleSignIn.bind(this)}>
                         <span className={this.state.messageColor}>{this.state.message}</span>
                         <input className="form-control" type="text" ref="user_info" placeholder="Email or Username"/>
@@ -180,7 +180,7 @@ class Navbar extends Component {
             )
         } else if (this.state.formType === "signUp") {
             formType = (
-                <div>
+                <div className="formWrapper">
                     <form className="form-inline signUpForm" onSubmit={this.handleSignUp.bind(this)}>
                         <span className={this.state.messageColor}>{this.state.message}</span>
                         <input className="form-control" type="email" ref="signUpEmail" placeholder="Email"/>
@@ -193,7 +193,7 @@ class Navbar extends Component {
             )
         } else if (this.state.formType === "reset") {
             formType = (
-                <div>
+                <div className="formWrapper">
                     <form className="form-inline resetForm" onSubmit={this.resetPassword.bind(this)}>
                         <span className={this.state.messageColor}>{this.state.message}</span>
                         <input className="form-control" type="email" ref="recoveryEmail" placeholder="Email"/>
