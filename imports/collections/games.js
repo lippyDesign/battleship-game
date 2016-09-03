@@ -30,10 +30,13 @@ Meteor.methods({
         if (!this.userId) {
             throw new Meteor.Error('not-authorized');
         }
+        // decide whose turn it is to go first
+        let turn = (Math.floor(Math.random() * 2) + 1) === 1 ? userOneInfo.createdBy : userTwoInfo.createdBy;
 
         Games.insert({
             userOneInfo,
             userTwoInfo,
+            turn,
             createdAt: new Date(),
             winner: ''
         });

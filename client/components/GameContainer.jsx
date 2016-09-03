@@ -39,7 +39,7 @@ class GameContainer extends Component {
             ],
             compCellsAlreadyTaken: [],
 
-            //////// in game ////////////
+            //////// in game computer ////////////
             turn: '',
             inGame: false,
             usersShots: [],
@@ -47,7 +47,7 @@ class GameContainer extends Component {
             nextCompTargets: [],
             shipPositionNotPossible: [],
             locationsOfHitShips: [],
-            cellsToShootAt: []
+            cellsToShootAt: [],
         }
     }
     componentWillMount() {
@@ -260,7 +260,11 @@ class GameContainer extends Component {
     }
     // get the first ship that has not been positioned yet
     getShipInHand() {
-        return this.state.ships.find( ship => !ship.positioned) ? this.state.ships.find( ship => !ship.positioned) : '';
+        // check to see if there is a game with this user in it
+        let game = this.props.games.find(game => (game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id) && !game.winner) ? this.props.games.find(game => (game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id) && !game.winner) : '';
+        if (!game) {
+            return this.state.ships.find( ship => !ship.positioned) ? this.state.ships.find( ship => !ship.positioned) : '';
+        }
     }
     setShip(cell, ship) {
         // cell is what user pressed when confirming position
@@ -737,7 +741,7 @@ class GameContainer extends Component {
         }
         let shipPositions = this.state.ships.map( ship => ship.location); // get positions of ships from ships state
         let shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
-        if (game !== null) {
+        if (game !== null) { // if user already has a game
             let user = game.userOneInfo.createdBy === this.props.currentUser._id ? game.userOneInfo : game.userTwoInfo;
             shipPositions = user.gameShips.map( ship => ship.location);
             shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
@@ -871,52 +875,100 @@ class GameContainer extends Component {
                 shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
             }
         }
-        
-        // map over the cells array and create li elements for every cell
-        return cells.map( (cell) => {
-            let blackShip = (shipsArray.indexOf(cell) === -1) ? '' : 'ship';
-            let cursor = this.state.inGame ? 'pointer' : '';
-            let shotOrNot = cell;
-            let shotCell = '';
-            if (this.state.usersShots.indexOf(cell) !== -1) { // if missed
-                shotOrNot = <i className="fa fa-times-circle-o text-danger" aria-hidden="true"></i>;
-                shotCell = 'missed';
-                white = 'white'
-            }
-            if (shipsArray.indexOf(cell) !== -1 && this.state.usersShots.indexOf(cell) !== -1) { // if ship was hit
-                shotOrNot = <i className="fa fa-fire text-info" id='white' aria-hidden="true"></i>;
-                shotCell = 'killed';
-            }
-            // if game is over, display all comp ships
-            let allCompShipsKilled;
-            let allUserShipsKilled;
-            if (this.state.inGame) { // if comp ships were killed
-                let x = this.state.compShips.map( ship => ship.location);
-                let flatX = [].concat.apply([], x);
-                allCompShipsKilled = flatX.every(element => this.state.usersShots.indexOf(element) !== -1);
-            }
-            if (this.state.inGame) { // if user ships were killed
-                let x = this.state.ships.map( ship => ship.location);
-                let flatX = [].concat.apply([], x);
-                allUserShipsKilled = flatX.every(element => this.state.computersShots.indexOf(element) !== -1);
-            }
-            if (allCompShipsKilled || allUserShipsKilled) {
-                if (shipsArray.indexOf(cell) !== -1 && this.state.usersShots.indexOf(cell) === -1) { // display the rest of comp ships
-                    shotOrNot = cell;
-                    shotCell = 'notKilled';
-                    let cursor = '';
+        if (game !== null) { // if playing a human game
+            // map over the cells array and create li elements for every cell
+            console.log(game)
+            return cells.map( (cell) => {
+                let blackShip = (shipsArray.indexOf(cell) === -1) ? '' : 'ship';
+                let cursor = game.turn === this.props.currentUser._id ? 'pointer' : ''
+                let shotOrNot = cell;
+                let shotCell = '';
+                if (this.state.usersShots.indexOf(cell) !== -1) { // if missed
+                    shotOrNot = <i className="fa fa-times-circle-o text-danger" aria-hidden="true"></i>;
+                    shotCell = 'missed';
+                    white = 'white'
                 }
-            }
-            return (
-                <li 
-                    className={`cell cellNum${cell} ${cursor} ${shotCell}`}
-                    key={cell}
-                    onClick={this.state.inGame && (this.state.turn === 'usersTurn') ? () => this.userPlay(cell) : '' }
-                >
-                        <small>{shotOrNot}</small>
-                </li>
-            )
-        });
+                if (shipsArray.indexOf(cell) !== -1 && this.state.usersShots.indexOf(cell) !== -1) { // if ship was hit
+                    shotOrNot = <i className="fa fa-fire text-info" id='white' aria-hidden="true"></i>;
+                    shotCell = 'killed';
+                }
+                // if game is over, display all comp ships
+                let allCompShipsKilled;
+                let allUserShipsKilled;
+                if (this.state.inGame) { // if comp ships were killed
+                    let x = this.state.compShips.map( ship => ship.location);
+                    let flatX = [].concat.apply([], x);
+                    allCompShipsKilled = flatX.every(element => this.state.usersShots.indexOf(element) !== -1);
+                }
+                if (this.state.inGame) { // if user ships were killed
+                    let x = this.state.ships.map( ship => ship.location);
+                    let flatX = [].concat.apply([], x);
+                    allUserShipsKilled = flatX.every(element => this.state.computersShots.indexOf(element) !== -1);
+                }
+                if (allCompShipsKilled || allUserShipsKilled) {
+                    if (shipsArray.indexOf(cell) !== -1 && this.state.usersShots.indexOf(cell) === -1) { // display the rest of comp ships
+                        shotOrNot = cell;
+                        shotCell = 'notKilled';
+                        let cursor = '';
+                    }
+                }
+                return (
+                    <li 
+                        className={`cell cellNum${cell} ${cursor} ${shotCell}`}
+                        key={cell}
+                        onClick={this.state.inGame && (this.state.turn === 'usersTurn') ? () => this.userPlay(cell) : '' }
+                    >
+                            <small>{shotOrNot}</small>
+                    </li>
+                )
+            });
+        } else { // if playing against computer
+            // map over the cells array and create li elements for every cell
+            return cells.map( (cell) => {
+                let blackShip = (shipsArray.indexOf(cell) === -1) ? '' : 'ship';
+                let cursor = this.state.inGame ? 'pointer' : '';
+                let shotOrNot = cell;
+                let shotCell = '';
+                if (this.state.usersShots.indexOf(cell) !== -1) { // if missed
+                    shotOrNot = <i className="fa fa-times-circle-o text-danger" aria-hidden="true"></i>;
+                    shotCell = 'missed';
+                    white = 'white'
+                }
+                if (shipsArray.indexOf(cell) !== -1 && this.state.usersShots.indexOf(cell) !== -1) { // if ship was hit
+                    shotOrNot = <i className="fa fa-fire text-info" id='white' aria-hidden="true"></i>;
+                    shotCell = 'killed';
+                }
+                // if game is over, display all comp ships
+                let allCompShipsKilled;
+                let allUserShipsKilled;
+                if (this.state.inGame) { // if comp ships were killed
+                    let x = this.state.compShips.map( ship => ship.location);
+                    let flatX = [].concat.apply([], x);
+                    allCompShipsKilled = flatX.every(element => this.state.usersShots.indexOf(element) !== -1);
+                }
+                if (this.state.inGame) { // if user ships were killed
+                    let x = this.state.ships.map( ship => ship.location);
+                    let flatX = [].concat.apply([], x);
+                    allUserShipsKilled = flatX.every(element => this.state.computersShots.indexOf(element) !== -1);
+                }
+                if (allCompShipsKilled || allUserShipsKilled) {
+                    if (shipsArray.indexOf(cell) !== -1 && this.state.usersShots.indexOf(cell) === -1) { // display the rest of comp ships
+                        shotOrNot = cell;
+                        shotCell = 'notKilled';
+                        let cursor = '';
+                    }
+                }
+                return (
+                    <li 
+                        className={`cell cellNum${cell} ${cursor} ${shotCell}`}
+                        key={cell}
+                        onClick={this.state.inGame && (this.state.turn === 'usersTurn') ? () => this.userPlay(cell) : '' }
+                    >
+                            <small>{shotOrNot}</small>
+                    </li>
+                )
+            });
+        }
     }
     userPlay(cell) {
         let x = this.state.compShips.map( ship => ship.location); // comp ship position arrays
@@ -1092,6 +1144,7 @@ class GameContainer extends Component {
     startGame(opp) {
         userData = {
             gameShips: this.state.ships,
+            shots: [],
             createdBy: this.props.currentUser._id,
             username: this.props.currentUser.username,
         }
@@ -1151,9 +1204,10 @@ class GameContainer extends Component {
             // check to see if there is a game with this user in it
             let game = this.props.games.find(game => (game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id) && !game.winner) ? this.props.games.find(game => (game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id) && !game.winner) : '';
             if (game) {
+                message = game.turn === this.props.currentUser._id ? "Your Turn" : "Opponent's Turn";
                 whoIsUser = (
                     <div className="gameLeftSection">
-                        <h2>{message} {readyButton} {restartButton}</h2>
+                        <h2>{message} {restartButton}</h2>
                         <h1>{this.props.currentUser ? this.props.currentUser.username : 'User'}</h1>
                         <UserGameboard gridMaker={this.gridMaker.bind(this)} game={game} />
                     </div>
