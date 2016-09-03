@@ -7,6 +7,7 @@ import OponentGameboard from './OponentGameboard';
 import Navbar from './Navbar'
 
 import { Staging } from '../../imports/collections/staging';
+import { Games } from '../../imports/collections/games';
 
 class GameContainer extends Component {
     constructor() {
@@ -50,6 +51,10 @@ class GameContainer extends Component {
         }
     }
     componentWillMount() {
+        if (!Meteor.userId()) {
+            browserHistory.push('/');
+        }
+        
         const alphabet = [...Array(26)].reduce(a=>a+String.fromCharCode(i++),'',i=97); // create alphabet
         const letters = alphabet.substr(0, 10).toUpperCase().split(""); // get the needed amount of alphabet characters for columns
         let cells = [] // initiate array for cells
@@ -719,7 +724,7 @@ class GameContainer extends Component {
         }
     }
     
-    gridMaker(numColumns, numRows) {
+    gridMaker(numColumns, numRows, game = null) {
         const alphabet = [...Array(26)].reduce(a=>a+String.fromCharCode(i++),'',i=97); // create alphabet
         const letters = alphabet.substr(0, numColumns).toUpperCase().split(""); // get the needed amount of alphabet characters for columns
         let cells = ['-', ...letters] // initiate array for cells and insert column labels into it
@@ -732,6 +737,11 @@ class GameContainer extends Component {
         }
         let shipPositions = this.state.ships.map( ship => ship.location); // get positions of ships from ships state
         let shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
+        if (game !== null) {
+            let user = game.userOneInfo.createdBy === this.props.currentUser._id ? game.userOneInfo : game.userTwoInfo;
+            shipPositions = user.gameShips.map( ship => ship.location);
+            shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
+        }
         // map over the cells array and create li elements for every cell
         return cells.map( (cell) => {
             let theShip = this.getShipInHand();
@@ -837,7 +847,7 @@ class GameContainer extends Component {
         });
         return this.compPosition(newCellsUsed); // recursive call of the function above
     }
-    autoGridMaker(numColumns, numRows, opponent = null) {
+    autoGridMaker(numColumns, numRows, game = null) {
         const alphabet = [...Array(26)].reduce(a=>a+String.fromCharCode(i++),'',i=97); // create alphabet
         const letters = alphabet.substr(0, numColumns).toUpperCase().split(""); // get the needed amount of alphabet characters for columns
         let cells = ['-', ...letters] // initiate array for cells and insert column labels into it
@@ -849,13 +859,19 @@ class GameContainer extends Component {
             });
         }
         let shipPositions;
+        let shipsArray;
         if (this.props.params.opponent === 'computer') { // if opponent is computer
-            let shipPositions = this.state.compShips.map( ship => ship.location); // get positions of ships from ships state
+            shipPositions = this.state.compShips.map( ship => ship.location); // get positions of ships from ships state
+            shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
         } else { // if opponent is human
-            let shipPositions = opponent.ships.map( ship => ship.location); // get positions of ships from database
+            // is user one or user two
+            if (game !== null) {
+                let opponent = game.userOneInfo.createdBy !== this.props.currentUser._id ? game.userOneInfo : game.userTwoInfo;
+                shipPositions = opponent.gameShips.map( ship => ship.location);
+                shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
+            }
         }
         
-        let shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
         // map over the cells array and create li elements for every cell
         return cells.map( (cell) => {
             let blackShip = (shipsArray.indexOf(cell) === -1) ? '' : 'ship';
@@ -1058,12 +1074,28 @@ class GameContainer extends Component {
             locationsOfHitShips: hitsArray
         });
     }
-    startGame() {
+    readyTapped() {
         if (this.props.params.opponent === 'computer') {
             return this.setState({inGame: true})
         } else {
-            return Meteor.call('staging.insert', this.state.ships);
+            // if there is an opponent waiting, join their game, else create a game and wait for someone to join
+            let opp = this.props.staging.find(opponent => opponent.createdBy !== this.props.currentUser._id);
+            if (opp) {
+                // if joining opponents game, remove it from staging as opponent is not waiting anymore
+                Meteor.call('staging.remove', opp._id);
+                return this.startGame(opp)
+            } else {
+                return Meteor.call('staging.insert', this.state.ships);
+            }
         }
+    }
+    startGame(opp) {
+        userData = {
+            gameShips: this.state.ships,
+            createdBy: this.props.currentUser._id,
+            username: this.props.currentUser.username,
+        }
+        Meteor.call('games.insert', userData, opp);
     }
     render() {
         let allCompShipsKilled;
@@ -1088,31 +1120,48 @@ class GameContainer extends Component {
         message = allCompShipsKilled ? 'game over, User won' : message; // if user won
         message = allUserShipsKilled ? 'game over, Computer won' : message; // if computer won
         // If all ships are positioned than we save them into the database
-        const readyButton = (message === 'All ships are positioned') ? <button className="btn btn-success" onClick={() => this.startGame()}>I'm ready!</button> : '';
+        const readyButton = (message === 'All ships are positioned') ? <button className="btn btn-success" onClick={() => this.readyTapped()}>I'm ready!</button> : '';
         const restartButton = (allCompShipsKilled || allUserShipsKilled) ? <button className="btn btn-primary" onClick={() => window.location.reload()}>Rematch</button> : '';
         let whoIsOpponent = '';
+        whoIsUser = (
+            <div className="gameLeftSection">
+                <h2>{message} {readyButton} {restartButton}</h2>
+                <h1>{this.props.currentUser ? this.props.currentUser.username : 'User'}</h1>
+                <UserGameboard gridMaker={this.gridMaker.bind(this)} />
+            </div>
+        );
         if (this.props.params.opponent === 'computer') { // if chose to play against computer
             whoIsOpponent = (
                 <div className="gameRightSection">
                     <h1>Opponent</h1>
                     <OponentGameboard gridMaker={this.autoGridMaker.bind(this)}/>
                 </div>
-            )
+            );
         }
-        else if (this.props.params.opponent === 'random-human') { // if chose to play against a random human
-            // check if someone is ready to play
-            const opponent = this.props.staging.find(opponent => opponent.createdBy === this.props.currentUser._id) ? this.props.staging.find(opponent => opponent.createdBy === this.props.currentUser._id) : 'waiting for opponent'
-            if (typeof opponent === 'string') { // if no opponent
-                whoIsOpponent = (
-                    <div className="gameRightSection">
-                        <h1 className="text-info">Searching for Opponent <i className="fa fa-circle-o-notch fa-spin fa-3x fa-fw"></i></h1>
+        else if (this.props.params.opponent === 'random-human') { // if chose to play against human
+            let helperHeading = (message !== 'All ships are positioned') ? <h1 className="text-info">Please position your ships</h1> : <h1 className="text-success">All ships are positioned</h1>;
+            if (this.props.staging.find(game => game.createdBy === this.props.currentUser._id)) {
+                helperHeading = <h1 className="text-info">Waiting for someone to join <i className="fa fa-circle-o-notch fa-spin fa-3x fa-fw"></i></h1>
+            }
+            whoIsOpponent = (
+                <div className="gameRightSection">
+                    {helperHeading}
+                </div>
+            )
+            // check to see if there is a game with this user in it
+            let game = this.props.games.find(game => (game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id) && !game.winner) ? this.props.games.find(game => (game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id) && !game.winner) : '';
+            if (game) {
+                whoIsUser = (
+                    <div className="gameLeftSection">
+                        <h2>{message} {readyButton} {restartButton}</h2>
+                        <h1>{this.props.currentUser ? this.props.currentUser.username : 'User'}</h1>
+                        <UserGameboard gridMaker={this.gridMaker.bind(this)} game={game} />
                     </div>
-                )
-            } else { // if there is an opponent
+                );
                 whoIsOpponent = (
                     <div className="gameRightSection">
-                        <h1>{opponent.username ? opponent.username : 'Opponent'}</h1>
-                        <OponentGameboard gridMaker={this.autoGridMaker.bind(this)} opponent={opponent}/>
+                        <h1>{game.userOneInfo.createdBy === this.props.currentUser._id ? game.userTwoInfo.username : game.userOneInfo.username}</h1>
+                        <OponentGameboard gridMaker={this.autoGridMaker.bind(this)} game={game}/>
                     </div>
                 )
             }
@@ -1120,13 +1169,7 @@ class GameContainer extends Component {
         return (
             <div className='GameContainer'>
                 <Navbar/>
-                <div className="gameLeftSection">
-                    <h2>{message} {readyButton} {restartButton}</h2>
-                    <h1>{this.props.currentUser ? this.props.currentUser.username : 'User'}</h1>
-                    <UserGameboard
-                        gridMaker={this.gridMaker.bind(this)}
-                    />
-                </div>
+                {whoIsUser}
                 {whoIsOpponent}
             </div>
         )
@@ -1135,8 +1178,10 @@ class GameContainer extends Component {
 
 export default createContainer( () => {
     Meteor.subscribe('staging');
+    Meteor.subscribe('games');
     return {
         staging: Staging.find({}).fetch(),
+        games: Games.find({}).fetch(),
         currentUser: Meteor.user()
     };
 }, GameContainer);

@@ -14,8 +14,6 @@ if (Meteor.isServer) {
 Meteor.methods({
 
     'staging.insert'(gameShips) {
-        
-        let ships = []
 
         // Make sure we are inserting strings
         gameShips.forEach( ({vesselType, location}) => {
@@ -23,7 +21,6 @@ Meteor.methods({
             location.forEach( (current) => {
                 check(current, String);
             })
-            ships.push({vesselType, location});
         })
         
         // Make sure the user is logged in before inserting a task
@@ -32,11 +29,14 @@ Meteor.methods({
         }
 
         Staging.insert({
-            ships,
-            createdAt: new Date(),
+            gameShips,
             createdBy: this.userId,
             username: Meteor.users.findOne(this.userId).username,
         });
+    },
+    'staging.remove'(stagingId) {
+        check(stagingId, String);
+        Staging.remove(stagingId);
     }
 });
 
