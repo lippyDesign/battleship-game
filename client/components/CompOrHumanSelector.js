@@ -1,43 +1,89 @@
-import React from 'react';
+import React, { Component } from 'react';
 import { browserHistory } from 'react-router';
+import { createContainer } from 'meteor/react-meteor-data';
 
-data = [
-    {
-        icon: 'fa fa-desktop fa-3x',
-        bigText: 'Play Against Computer',
-        smallText: 'See if you can beat this super mega powerful battleship computer',
-        url: '/create-game/computer'
-    },
-    {
-        icon: 'fa fa-user fa-3x',
-        bigText: 'Play Against a Friend',
-        smallText: 'Create a game and wait until someone joins it, then beat them',
-        url: '/create-game/friend'
-    },
-    {
-        icon: 'fa fa-random fa-3x',
-        bigText: 'Play a Random Game',
-        smallText: 'Join a random game created by a human being just like yourself',
-        url: '/create-game/random-human'
+import { Staging } from '../../imports/collections/staging';
+import { Games } from '../../imports/collections/games';
+
+class compOrHumanSelector extends Component {
+    getData() {
+        const helperMessage = 'you are currently in a game, finish that game before playing any other game';
+        let data = [
+            {
+                icon: 'fa fa-desktop fa-3x',
+                bigText: 'Play Against Computer',
+                smallText: 'See if you can beat this super mega powerful battleship computer',
+                url: '/create-game/computer'
+            },
+            {
+                icon: 'fa fa-user fa-3x',
+                bigText: 'Play Against a Friend',
+                smallText: 'Create a game and wait until someone joins it, then beat them',
+                url: '/create-game/friend'
+            },
+            {
+                icon: 'fa fa-random fa-3x',
+                bigText: 'Play a Random Game',
+                smallText: 'Join a random game created by a human being just like yourself',
+                url: '/create-game/random-human'
+            }
+        ];
+        // check if user is already in a game. userAlreadyHasGame will be undefined if user not in a game or the game object if user in game
+        const userAlreadyHasGame = this.props.games.find(game => game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id);
+        // check if user has a game in the staging area. userStagingGame will be undefined if user has no game staging
+        const userStagingGame = this.props.staging.find(game => game.createdBy === this.props.currentUser._id);
+        let fontColorClass = '';
+        if (userStagingGame) {
+            data[0].smallText = 'You already have a game waiting for an opponent to join (in random game section). You cannot play against computer while you have that game'
+            data[0].url = '/dashboard';
+            return data.map( ({icon, bigText, smallText, url}) => {
+                return (
+                    <section className={fontColorClass} key={`${icon}${bigText}`} onClick={()=> browserHistory.push(url)}>
+                        <h1><i className={icon}></i></h1>
+                        <h1>{bigText}</h1>
+                        <h2>{smallText}</h2>
+                    </section>
+                )
+            });
+        } else if (userAlreadyHasGame) {
+            data[0].smallText = 'You already have a game against an opponent (in random game section). You cannot play against computer while you have that game'
+            data[0].url = '/dashboard';
+            return data.map( ({icon, bigText, smallText, url}) => {
+                return (
+                    <section className={fontColorClass} key={`${icon}${bigText}`} onClick={()=> browserHistory.push(url)}>
+                        <h1><i className={icon}></i></h1>
+                        <h1>{bigText}</h1>
+                        <h2>{smallText}</h2>
+                    </section>
+                )
+            });
+        } else {
+            return data.map( ({icon, bigText, smallText, url}) => {
+                return (
+                    <section className={fontColorClass} key={`${icon}${bigText}`} onClick={()=> browserHistory.push(url)}>
+                        <h1><i className={icon}></i></h1>
+                        <h1>{bigText}</h1>
+                        <h2>{smallText}</h2>
+                    </section>
+                )
+            });
+        }
     }
-]
-
-function getData() {
-    return data.map( ({icon, bigText, smallText, url}) => {
+    render() {
         return (
-            <section key={`${icon}${bigText}`} onClick={()=> browserHistory.push(url)}>
-                <h1><i className={icon}></i></h1>
-                <h1>{bigText}</h1>
-                <h2>{smallText}</h2>
-            </section>
+            <div className="compOrHumanSelector">
+                {this.getData()}
+            </div>
         )
-    });
+    }
 }
 
-export default () => {
-    return (
-        <div className="compOrHumanSelector">
-            {getData()}
-        </div>
-    )
-}
+export default createContainer( () => {
+    Meteor.subscribe('staging');
+    Meteor.subscribe('games');
+    return {
+        staging: Staging.find({}).fetch(),
+        games: Games.find({}).fetch(),
+        currentUser: Meteor.user()
+    };
+}, compOrHumanSelector);

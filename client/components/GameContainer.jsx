@@ -728,7 +728,7 @@ class GameContainer extends Component {
         }
     }
     
-    gridMaker(numColumns, numRows, game = null) {
+    gridMaker(numColumns, numRows, staging = null, game = null) {
         const alphabet = [...Array(26)].reduce(a=>a+String.fromCharCode(i++),'',i=97); // create alphabet
         const letters = alphabet.substr(0, numColumns).toUpperCase().split(""); // get the needed amount of alphabet characters for columns
         let cells = ['-', ...letters] // initiate array for cells and insert column labels into it
@@ -741,7 +741,11 @@ class GameContainer extends Component {
         }
         let shipPositions = this.state.ships.map( ship => ship.location); // get positions of ships from ships state
         let shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
-        if (game !== null) { // if user already has a game
+        if (staging) { // if user is already staging
+            shipPositions = staging.gameShips.map( ship => ship.location);
+            shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
+        }
+        if (game) { // if user already has a game
             let user = game.userOneInfo.createdBy === this.props.currentUser._id ? game.userOneInfo : game.userTwoInfo;
             shipPositions = user.gameShips.map( ship => ship.location);
             shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
@@ -869,13 +873,13 @@ class GameContainer extends Component {
             shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
         } else { // if opponent is human
             // is user one or user two
-            if (game !== null) {
+            if (game && this.props.params.opponent === "random-human") {
                 let opponent = game.userOneInfo.createdBy !== this.props.currentUser._id ? game.userOneInfo : game.userTwoInfo;
                 shipPositions = opponent.gameShips.map( ship => ship.location);
                 shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
             }
         }
-        if (game !== null) { // if playing a human game
+        if (game && this.props.params.opponent === "random-human") { // if playing a human game
             // map over the cells array and create li elements for every cell
             console.log(game)
             return cells.map( (cell) => {
@@ -1201,9 +1205,22 @@ class GameContainer extends Component {
                     {helperHeading}
                 </div>
             )
+            // check to see if there is a staging game with this user in it
+            let staging = this.props.staging.find(game => game.createdBy === this.props.currentUser._id);
+            if (staging && this.props.params.opponent === "random-human") {
+                console.log(staging)
+                message = "waiting for an opponent to join your game";
+                whoIsUser = (
+                    <div className="gameLeftSection">
+                        <h2>{message}</h2>
+                        <h1>{this.props.currentUser ? this.props.currentUser.username : 'User'}</h1>
+                        <UserGameboard gridMaker={this.gridMaker.bind(this)} staging={staging} />
+                    </div>
+                );
+            }
             // check to see if there is a game with this user in it
             let game = this.props.games.find(game => (game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id) && !game.winner) ? this.props.games.find(game => (game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id) && !game.winner) : '';
-            if (game) {
+            if (game && this.props.params.opponent === "random-human") {
                 message = game.turn === this.props.currentUser._id ? "Your Turn" : "Opponent's Turn";
                 whoIsUser = (
                     <div className="gameLeftSection">

@@ -7,7 +7,7 @@ class UserGameboard extends Component {
     render() {
         return (
             <ul className="GameBoard">
-                {this.props.gridMaker(10, 10, this.props.game)}
+                {this.props.gridMaker(10, 10, this.props.staging, this.props.game)}
             </ul>
         )
     }
