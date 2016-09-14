@@ -28,53 +28,38 @@ class compOrHumanSelector extends Component {
                 url: '/create-game/random-human'
             }
         ];
+        return data.map( ({icon, bigText, smallText, url}) => {
+            return (
+                <section key={`${icon}${bigText}`} onClick={()=> browserHistory.push(url)}>
+                    <h1><i className={icon}></i></h1>
+                    <h1>{bigText}</h1>
+                    <h2>{smallText}</h2>
+                </section>
+            )
+        });
+    }
+    render() {
         // check if user is already in a game. userAlreadyHasGame will be undefined if user not in a game or the game object if user in game
         const userAlreadyHasGame = this.props.games.find(game => game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id);
         // check if user has a game in the staging area. userStagingGame will be undefined if user has no game staging
         const userStagingGame = this.props.staging.find(game => game.createdBy === this.props.currentUser._id);
-        let fontColorClass = '';
-        if (userStagingGame) {
-            data[0].smallText = 'You already have a game waiting for an opponent to join (in random game section). You cannot play against computer while you have that game'
-            data[0].url = '/dashboard';
-            return data.map( ({icon, bigText, smallText, url}) => {
-                return (
-                    <section className={fontColorClass} key={`${icon}${bigText}`} onClick={()=> browserHistory.push(url)}>
-                        <h1><i className={icon}></i></h1>
-                        <h1>{bigText}</h1>
-                        <h2>{smallText}</h2>
-                    </section>
-                )
-            });
-        } else if (userAlreadyHasGame) {
-            data[0].smallText = 'You already have a game against an opponent (in random game section). You cannot play against computer while you have that game'
-            data[0].url = '/dashboard';
-            return data.map( ({icon, bigText, smallText, url}) => {
-                return (
-                    <section className={fontColorClass} key={`${icon}${bigText}`} onClick={()=> browserHistory.push(url)}>
-                        <h1><i className={icon}></i></h1>
-                        <h1>{bigText}</h1>
-                        <h2>{smallText}</h2>
-                    </section>
-                )
-            });
+        // if user already has game or there is a game staging
+        if (userAlreadyHasGame || userStagingGame) {
+            const message = userAlreadyHasGame ? "You are already playing a game" : "You already have a game waiting for an opponent"
+            return (
+                <div className="text-center">
+                    <h1>{message}</h1>
+                    <h2>You will need to finish that game before you can play any other games</h2>
+                    <button onClick={() => browserHistory.push('/create-game/random-human')} className="btn btn-info btn-lg">Go to my game!</button>
+                </div>     
+            );
         } else {
-            return data.map( ({icon, bigText, smallText, url}) => {
-                return (
-                    <section className={fontColorClass} key={`${icon}${bigText}`} onClick={()=> browserHistory.push(url)}>
-                        <h1><i className={icon}></i></h1>
-                        <h1>{bigText}</h1>
-                        <h2>{smallText}</h2>
-                    </section>
-                )
-            });
+            return (
+                <div className="compOrHumanSelector">
+                    {this.getData()}
+                </div>
+            );
         }
-    }
-    render() {
-        return (
-            <div className="compOrHumanSelector">
-                {this.getData()}
-            </div>
-        )
     }
 }
 
