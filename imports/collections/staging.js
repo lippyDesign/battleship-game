@@ -30,7 +30,6 @@ Meteor.methods({
 
         Staging.insert({
             gameShips,
-            shots: [],
             createdBy: this.userId,
             username: Meteor.users.findOne(this.userId).username,
         });

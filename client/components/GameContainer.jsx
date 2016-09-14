@@ -920,7 +920,7 @@ class GameContainer extends Component {
                     <li 
                         className={`cell cellNum${cell} ${cursor} ${shotCell}`}
                         key={cell}
-                        onClick={this.state.inGame && (this.state.turn === 'usersTurn') ? () => this.userPlay(cell) : '' }
+                        onClick={() => this.userPlayUser(cell)}
                     >
                             <small>{shotOrNot}</small>
                     </li>
@@ -984,7 +984,47 @@ class GameContainer extends Component {
                 whoGoesNext = 'usersTurn';
             }
             this.setState({usersShots: this.state.usersShots.concat(cell), turn: whoGoesNext});
-            //this.computerPlay();
+        }
+    }
+    userPlayUser(cell) {
+        // check to see if there is a game with this user in it
+        let game = this.props.games.find(game => (game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id) && !game.winner) ? this.props.games.find(game => (game.userOneInfo.createdBy === this.props.currentUser._id || 
+        game.userTwoInfo.createdBy === this.props.currentUser._id) && !game.winner) : '';
+        // if no game return
+        if (!game) {
+            console.log('no game');
+            return;
+        }
+        // is it user's turn, if it is, he/she can play
+        if (game.turn === this.props.currentUser._id) {
+            // who is opponent
+            const opponent = game.userOneInfo.createdBy === this.props.currentUser._id ? game.userTwoInfo : game.userOneInfo;
+            // who is user
+            const user = game.userOneInfo.createdBy === this.props.currentUser._id ? game.userOneInfo : game.userTwoInfo;
+            // find out the positions of opponent's ships
+            let opponetShips = opponent.gameShips.map( ship => ship.location);
+            // flatten opponetShips into one array
+            let opponetShipPositions = [].concat.apply([], opponetShips);
+            // create user shots array
+            const userShots = [];
+            // locate all user shots and push them into usersShots array
+            game.shots.forEach( entry => {
+                if (entry.shotBy === user.createdBy) {
+                    userShots.push(entry.shot);
+                }
+            });
+            // only do something if user did not shoot there yet
+            if (userShots.indexOf(cell) === -1) {
+                // insert the shot into user shots array
+                Meteor.call('games.addShot', game._id, user.createdBy, cell);
+                // if the shot hit opponet's ship'
+                if (opponetShipPositions.indexOf(cell) !== -1) {
+                    console.log('hit');
+                // if the shot missed opponent's ship
+                } else {
+                    console.log('miss');
+                }
+            }
         }
     }
     computerPlay() {

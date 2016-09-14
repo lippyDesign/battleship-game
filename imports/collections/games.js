@@ -38,8 +38,15 @@ Meteor.methods({
             userTwoInfo,
             turn,
             createdAt: new Date(),
-            winner: ''
+            winner: '',
+            shots: []
         });
+    },
+    'games.addShot'(game, user, cell) {
+        let thisGame = Games.find(g => g._id === game);
+        console.log(thisGame);
+        check(cell, String);
+        Games.update(game, { $push: {shots: {shotBy: user, shot: cell} } } );
     }
 });
 
