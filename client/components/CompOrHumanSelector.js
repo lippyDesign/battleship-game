@@ -40,7 +40,9 @@ class compOrHumanSelector extends Component {
     }
     render() {
         // check if user is already in a game. userAlreadyHasGame will be undefined if user not in a game or the game object if user in game
-        const userAlreadyHasGame = this.props.games.find(game => game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id);
+        let userAlreadyHasGame = this.props.games.find(game => {
+            return (game.userOneInfo.createdBy === this.props.currentUser._id && !game.winner) || (game.userTwoInfo.createdBy === this.props.currentUser._id && !game.winner);
+        });
         // check if user has a game in the staging area. userStagingGame will be undefined if user has no game staging
         const userStagingGame = this.props.staging.find(game => game.createdBy === this.props.currentUser._id);
         // if user already has game or there is a game staging

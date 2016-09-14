@@ -44,10 +44,21 @@ Meteor.methods({
     },
     'games.addShot'(game, user, cell) {
         let thisGame = Games.find(g => g._id === game);
-        console.log(thisGame);
+        check(game, String);
+        check(user, String);
         check(cell, String);
         Games.update(game, { $push: {shots: {shotBy: user, shot: cell} } } );
-    }
+    },
+    'games.changeTurn'(game, turn) {
+    check(game, String);
+    check(turn, String);
+    Games.update(game, { $set: { turn } });
+  },
+  'games.setWinner'(game, winner) {
+    check(game, String);
+    check(winner, String);
+    Games.update(game, { $set: { winner } });
+  },
 });
 
 export const Games = new Mongo.Collection('games');

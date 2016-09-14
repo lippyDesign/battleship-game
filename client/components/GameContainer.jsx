@@ -880,23 +880,32 @@ class GameContainer extends Component {
             }
         }
         if (game && this.props.params.opponent === "random-human") { // if playing a human game
-            // map over the cells array and create li elements for every cell
             console.log(game)
+            // get opponent info
+            const opponent = game.userOneInfo.createdBy !== this.props.currentUser._id ? game.userOneInfo : game.userTwoInfo;
+            // get user's shots array
+            let userShots = [];
+            game.shots.forEach(entry => {
+                if (entry.shotBy === this.props.currentUser._id) {
+                    userShots.push(entry.shot);
+                }
+            });
+            // map over the cells array and create li elements for every cell
             return cells.map( (cell) => {
                 let blackShip = (shipsArray.indexOf(cell) === -1) ? '' : 'ship';
                 let cursor = game.turn === this.props.currentUser._id ? 'pointer' : ''
                 let shotOrNot = cell;
                 let shotCell = '';
-                if (this.state.usersShots.indexOf(cell) !== -1) { // if missed
+                if (userShots.indexOf(cell) !== -1) { // if missed
                     shotOrNot = <i className="fa fa-times-circle-o text-danger" aria-hidden="true"></i>;
                     shotCell = 'missed';
-                    white = 'white'
+                    white = 'white';
                 }
-                if (shipsArray.indexOf(cell) !== -1 && this.state.usersShots.indexOf(cell) !== -1) { // if ship was hit
+                if (shipsArray.indexOf(cell) !== -1 && userShots.indexOf(cell) !== -1) { // if ship was hit
                     shotOrNot = <i className="fa fa-fire text-info" id='white' aria-hidden="true"></i>;
                     shotCell = 'killed';
                 }
-                // if game is over, display all comp ships
+                // if game is over, display all opponent's ships
                 let allCompShipsKilled;
                 let allUserShipsKilled;
                 if (this.state.inGame) { // if comp ships were killed
@@ -1020,9 +1029,19 @@ class GameContainer extends Component {
                 // if the shot hit opponet's ship'
                 if (opponetShipPositions.indexOf(cell) !== -1) {
                     console.log('hit');
+                    // add the shot to the user's shots so we could check if this is the last needed shot
+                    userShots.push(cell);
+                    // if all opponents ships have been killed
+                    if (opponetShipPositions.every(cell => userShots.indexOf(cell) !== -1)) {
+                        console.log('game over');
+                        Meteor.call('games.setWinner', game._id, user.createdBy);
+                        return;
+                    }
                 // if the shot missed opponent's ship
                 } else {
                     console.log('miss');
+                    // if missed, opponent's turn to shoot
+                    Meteor.call('games.changeTurn', game._id, opponent.createdBy);
                 }
             }
         }
