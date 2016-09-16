@@ -50,15 +50,19 @@ Meteor.methods({
         Games.update(game, { $push: {shots: {shotBy: user, shot: cell} } } );
     },
     'games.changeTurn'(game, turn) {
-    check(game, String);
-    check(turn, String);
-    Games.update(game, { $set: { turn } });
-  },
-  'games.setWinner'(game, winner) {
-    check(game, String);
-    check(winner, String);
-    Games.update(game, { $set: { winner } });
-  },
+        check(game, String);
+        check(turn, String);
+        Games.update(game, { $set: { turn } });
+    },
+    'games.setWinner'(game, winner) {
+        check(game, String);
+        check(winner, String);
+        Games.update(game, { $set: { winner } });
+    },
+    'games.remove'(gameId) {
+        check(gameId, String);
+        Games.remove(gameId);
+    },
 });
 
 export const Games = new Mongo.Collection('games');

@@ -745,10 +745,16 @@ class GameContainer extends Component {
             shipPositions = staging.gameShips.map( ship => ship.location);
             shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
         }
+        let opponentShots = [];
         if (game) { // if user already has a game
             let user = game.userOneInfo.createdBy === this.props.currentUser._id ? game.userOneInfo : game.userTwoInfo;
             shipPositions = user.gameShips.map( ship => ship.location);
             shipsArray = [].concat.apply([], shipPositions); // flatten arrays of positions into one array
+            game.shots.forEach(entry => {
+                if (entry.shotBy !== this.props.currentUser._id) {
+                    opponentShots.push(entry.shot);
+                }
+            });
         }
         // map over the cells array and create li elements for every cell
         return cells.map( (cell) => {
@@ -768,12 +774,28 @@ class GameContainer extends Component {
             let cursor = this.getShipInHand() ? 'pointer' : '';
             let shotOrNot = cell;
             let shotCell = ''
-            if (this.state.computersShots.indexOf(cell) !== -1) {
-                shotOrNot = <i className="fa fa-times-circle-o text-danger" aria-hidden="true"></i>;
-                shotCell = 'missed';
-            }
-            if (shipsArray.indexOf(cell) !== -1 && this.state.computersShots.indexOf(cell) !== -1) { // if ship was hit
-                shotOrNot = <i className="fa fa-fire text-danger" aria-hidden="true"></i>;
+            // if in a game against human
+            if (game) {
+                // remove positioning assistant if playing
+                positionClass = '';
+                if (opponentShots.indexOf(cell) !== -1) { // if missed
+                    shotOrNot = <i className="fa fa-times-circle-o text-danger" aria-hidden="true"></i>;
+                    shotCell = 'missed';
+                    white = 'white';
+                }
+                if (shipsArray.indexOf(cell) !== -1 && opponentShots.indexOf(cell) !== -1) { // if ship was hit
+                    shotOrNot = <i className="fa fa-fire text-info" id='white' aria-hidden="true"></i>;
+                    shotCell = 'killed';
+                }
+            // if in a game against computer
+            } else {
+                if (this.state.computersShots.indexOf(cell) !== -1) {
+                    shotOrNot = <i className="fa fa-times-circle-o text-danger" aria-hidden="true"></i>;
+                    shotCell = 'missed';
+                }
+                if (shipsArray.indexOf(cell) !== -1 && this.state.computersShots.indexOf(cell) !== -1) { // if ship was hit
+                    shotOrNot = <i className="fa fa-fire text-danger" aria-hidden="true"></i>;
+                }
             }
             
             return (
@@ -880,7 +902,6 @@ class GameContainer extends Component {
             }
         }
         if (game && this.props.params.opponent === "random-human") { // if playing a human game
-            console.log(game)
             // get opponent info
             const opponent = game.userOneInfo.createdBy !== this.props.currentUser._id ? game.userOneInfo : game.userTwoInfo;
             // get user's shots array
@@ -1028,7 +1049,6 @@ class GameContainer extends Component {
                 Meteor.call('games.addShot', game._id, user.createdBy, cell);
                 // if the shot hit opponet's ship'
                 if (opponetShipPositions.indexOf(cell) !== -1) {
-                    console.log('hit');
                     // add the shot to the user's shots so we could check if this is the last needed shot
                     userShots.push(cell);
                     // if all opponents ships have been killed
@@ -1039,7 +1059,6 @@ class GameContainer extends Component {
                     }
                 // if the shot missed opponent's ship
                 } else {
-                    console.log('miss');
                     // if missed, opponent's turn to shoot
                     Meteor.call('games.changeTurn', game._id, opponent.createdBy);
                 }
@@ -1213,6 +1232,10 @@ class GameContainer extends Component {
         }
         Meteor.call('games.insert', userData, opp);
     }
+    quitGameTapped(type, id) {
+        // type can either be 'staging' or 'games'
+        Meteor.call(`${type}.remove`, id);
+    }
     render() {
         let allCompShipsKilled;
         let allUserShipsKilled;
@@ -1266,12 +1289,12 @@ class GameContainer extends Component {
             )
             // check to see if there is a staging game with this user in it
             let staging = this.props.staging.find(game => game.createdBy === this.props.currentUser._id);
-            if (staging && this.props.params.opponent === "random-human") {
-                console.log(staging)
+            if (staging) {
+                const quitButton = <button className="btn btn-danger" onClick={ ()=> this.quitGameTapped('staging', staging._id) }>Quit</button>
                 message = "waiting for an opponent to join your game";
                 whoIsUser = (
                     <div className="gameLeftSection">
-                        <h2>{message}</h2>
+                        <h2>{message} {quitButton}</h2>
                         <h1>{this.props.currentUser ? this.props.currentUser.username : 'User'}</h1>
                         <UserGameboard gridMaker={this.gridMaker.bind(this)} staging={staging} />
                     </div>
@@ -1280,10 +1303,11 @@ class GameContainer extends Component {
             // check to see if there is a game with this user in it
             let game = this.props.games.find(game => (game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id) && !game.winner) ? this.props.games.find(game => (game.userOneInfo.createdBy === this.props.currentUser._id || game.userTwoInfo.createdBy === this.props.currentUser._id) && !game.winner) : '';
             if (game && this.props.params.opponent === "random-human") {
+                const quitButton = <button className="btn btn-danger" onClick={ ()=> this.quitGameTapped('games', game._id) }>Quit</button>
                 message = game.turn === this.props.currentUser._id ? "Your Turn" : "Opponent's Turn";
                 whoIsUser = (
                     <div className="gameLeftSection">
-                        <h2>{message} {restartButton}</h2>
+                        <h2>{message} {restartButton} {quitButton}</h2>
                         <h1>{this.props.currentUser ? this.props.currentUser.username : 'User'}</h1>
                         <UserGameboard gridMaker={this.gridMaker.bind(this)} game={game} />
                     </div>
