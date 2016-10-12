@@ -4,6 +4,9 @@
 html, body {
   height: 100%;
 }
+jumbotron {
+  text-align: center;
+}
 .render-target {
   min-height: 100%;
   margin-bottom: -142px; 
@@ -138,7 +141,9 @@ nav {
 .accountButtons button {
   margin-right: 10px;
 }
-
+footer {
+  padding-top: 20px;
+}
 
 /* -------------- SMALL SCREENS ----------------------------------------------------------- */
 @media screen and (max-width: 1000px) {

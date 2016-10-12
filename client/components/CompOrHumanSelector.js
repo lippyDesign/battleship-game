@@ -16,12 +16,6 @@ class compOrHumanSelector extends Component {
                 url: '/create-game/computer'
             },
             {
-                icon: 'fa fa-user fa-3x',
-                bigText: 'Play Against a Friend',
-                smallText: 'Create a game and wait until someone joins it, then beat them',
-                url: '/create-game/friend'
-            },
-            {
                 icon: 'fa fa-random fa-3x',
                 bigText: 'Play a Random Game',
                 smallText: 'Join a random game created by a human being just like yourself',
